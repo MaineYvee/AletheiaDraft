@@ -1,0 +1,7 @@
+package com.jhy.aletheia.exception;
+
+public class UnauthorizedException extends RuntimeException {
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+}

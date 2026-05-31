@@ -1,0 +1,853 @@
+# Aletheia — “Vibe Coding” Context & OOP Implementation Guide
+
+Use this as the development mindset and engineering guide for the whole project.
+
+---
+
+# Aletheia Engineering Philosophy
+
+## Core Rule
+
+> “Simple systems survive longer.”
+
+The goal is NOT to build the most advanced library system.
+
+The goal is to build:
+
+* understandable code
+* stable architecture
+* maintainable features
+* predictable behavior
+* scalable foundations
+
+Every feature should feel:
+
+```text
+clean
+intentional
+modular
+easy to extend
+```
+
+---
+
+# Development Vibe
+
+## Think Like a Librarian System Designer
+
+Every object represents a real-world concept.
+
+The codebase should read like the domain itself.
+
+---
+
+# GOOD
+
+```text
+User borrows Book
+Book has availability
+Reservation waits in queue
+BorrowRecord tracks due date
+```
+
+---
+
+# BAD
+
+```text
+MegaManager handles everything
+Utils class does random magic
+Controllers contain business logic
+```
+
+---
+
+# Engineering Priorities
+
+Always prioritize in this order:
+
+## 1. Correctness
+
+Does it work properly?
+
+## 2. Readability
+
+Can another developer understand it quickly?
+
+## 3. Stability
+
+Will it break easily?
+
+## 4. Maintainability
+
+Can future features be added safely?
+
+## 5. Optimization
+
+Only optimize AFTER stability.
+
+---
+
+# OOP Mindset for Aletheia
+
+---
+
+# 1. Model Real-World Objects Properly
+
+The system revolves around domain objects.
+
+---
+
+## Core Domain Objects
+
+```text
+User
+Book
+BorrowRecord
+Reservation
+AuthSession
+Notification
+```
+
+Each object should own its own responsibility.
+
+---
+
+# GOOD EXAMPLE
+
+## Book
+
+Responsible for:
+
+* availability
+* quantity tracking
+* metadata
+
+NOT responsible for:
+
+* authentication
+* sending emails
+* generating reports
+
+---
+
+# 2. Every Class Should Feel Predictable
+
+When opening a class, developers should instantly know:
+
+* what it does
+* what it should NOT do
+
+---
+
+# GOOD
+
+```text
+BookService
+```
+
+Expected:
+
+* borrow validation
+* availability checks
+* inventory updates
+
+---
+
+# BAD
+
+```text
+BookService
+```
+
+Unexpectedly:
+
+* sends OTPs
+* validates JWTs
+* exports PDFs
+
+---
+
+# 3. Thin Controllers, Smart Services
+
+---
+
+# Controller Vibe
+
+Controllers are:
+
+```text
+traffic managers
+```
+
+They:
+
+* receive requests
+* validate request structure
+* call services
+* return responses
+
+---
+
+# NEVER
+
+```java
+@PostMapping("/borrow")
+public ResponseEntity<?> borrowBook() {
+
+    // 200 lines of logic
+}
+```
+
+---
+
+# ALWAYS
+
+```java
+@PostMapping("/borrow")
+public ResponseEntity<?> borrowBook() {
+    return borrowService.borrowBook();
+}
+```
+
+---
+
+# Service Vibe
+
+Services contain:
+
+* business rules
+* validations
+* workflows
+* domain coordination
+
+---
+
+# 4. Protect Your Domain
+
+Entities should not be easily corrupted.
+
+---
+
+# GOOD
+
+```java
+private int availableCopies;
+```
+
+Modified through methods only.
+
+---
+
+# BAD
+
+```java
+public int availableCopies;
+```
+
+This invites invalid states.
+
+---
+
+# 5. Business Rules First, Technology Second
+
+Focus on the actual rules.
+
+---
+
+# Example
+
+Instead of thinking:
+
+```text
+How do I code borrowing?
+```
+
+Think:
+
+```text
+What are the rules of borrowing?
+```
+
+Rules:
+
+* cannot borrow unavailable books
+* max 5 borrowed books
+* due date is 14 days
+* overdue books must be tracked
+
+THEN implement them cleanly.
+
+---
+
+# 6. Avoid “Magic”
+
+Code should feel obvious.
+
+---
+
+# BAD
+
+```java
+processBookState();
+```
+
+What does that even mean?
+
+---
+
+# GOOD
+
+```java
+markBookAsReturned();
+updateAvailableCopies();
+validateBorrowLimit();
+```
+
+Explicit > clever.
+
+---
+
+# 7. Services Should Read Like Stories
+
+Good service methods feel human-readable.
+
+---
+
+# GOOD FLOW
+
+```java
+validateUser();
+
+validateBorrowLimit();
+
+findBook();
+
+validateAvailability();
+
+createBorrowRecord();
+
+reduceAvailableCopies();
+
+sendNotification();
+```
+
+Readable logic is professional logic.
+
+---
+
+# 8. Avoid Massive Classes Early
+
+---
+
+# If You Notice:
+
+* too many methods
+* unrelated logic
+* giant files
+* hard-to-find code
+
+STOP and split responsibilities.
+
+---
+
+# GOOD SPLIT
+
+```text
+AuthService
+BookService
+BorrowService
+ReservationService
+NotificationService
+```
+
+---
+
+# 9. Prefer Explicitness Over Abstraction
+
+Do not abstract too early.
+
+---
+
+# BAD
+
+```text
+UniversalManagerFactoryHandlerProcessor
+```
+
+---
+
+# GOOD
+
+```text
+BorrowService
+```
+
+Simple names scale better.
+
+---
+
+# 10. Database Design Should Reflect Reality
+
+---
+
+# GOOD RELATIONSHIPS
+
+```text
+User -> BorrowRecord -> Book
+```
+
+This naturally models borrowing.
+
+---
+
+# BAD RELATIONSHIPS
+
+Random duplicated book/user fields everywhere.
+
+---
+
+# 11. DTOs Are API Contracts
+
+Entities are internal.
+
+DTOs are external.
+
+---
+
+# GOOD
+
+```text
+BookEntity
+```
+
+Database object.
+
+---
+
+```text
+BookResponseDTO
+```
+
+Frontend response object.
+
+---
+
+# WHY?
+
+Prevents:
+
+* leaking sensitive data
+* frontend dependency on DB structure
+* accidental API breaks
+
+---
+
+# 12. Avoid Premature Complexity
+
+This is critical.
+
+---
+
+# DO NOT ADD YET
+
+* microservices
+* Kafka
+* CQRS
+* event sourcing
+* AI recommendations
+* websocket systems
+
+---
+
+# Why?
+
+Because the MVP problem is:
+
+```text
+track books and borrowing
+```
+
+Solve THAT first.
+
+---
+
+# 13. Build Features Vertically
+
+Complete one feature fully before moving on.
+
+---
+
+# GOOD DEVELOPMENT ORDER
+
+## Authentication
+
+DONE fully.
+
+Then:
+
+## Book Management
+
+DONE fully.
+
+Then:
+
+## Borrowing
+
+DONE fully.
+
+---
+
+# BAD
+
+Starting:
+
+* auth
+* analytics
+* notifications
+* recommendations
+
+all simultaneously.
+
+---
+
+# 14. Keep Frontend Components Focused
+
+---
+
+# GOOD COMPONENTS
+
+```text
+BookCard
+BorrowButton
+SearchBar
+ReturnModal
+```
+
+Small reusable UI units.
+
+---
+
+# BAD
+
+```text
+MegaDashboardComponent
+```
+
+3000-line React component nightmare.
+
+---
+
+# 15. State Should Be Predictable
+
+Frontend state should feel simple.
+
+---
+
+# GOOD
+
+```text
+authState
+bookList
+borrowedBooks
+searchQuery
+```
+
+---
+
+# BAD
+
+Huge deeply nested state trees.
+
+---
+
+# 16. Backend Should Own Business Truth
+
+Frontend should NOT decide:
+
+* borrow limits
+* due dates
+* permissions
+
+Backend enforces rules.
+
+Always.
+
+---
+
+# 17. Make Errors Human-Friendly
+
+---
+
+# BAD
+
+```text
+500 Internal Server Error
+```
+
+---
+
+# GOOD
+
+```json
+{
+  "message": "Book is currently unavailable"
+}
+```
+
+---
+
+# 18. Use Transactions for Critical Operations
+
+Borrowing books affects multiple things.
+
+---
+
+# Example
+
+Borrow operation:
+
+* create borrow record
+* reduce available copies
+
+Both MUST succeed together.
+
+---
+
+# Use
+
+```java
+@Transactional
+```
+
+---
+
+# 19. Design APIs Around Actions
+
+---
+
+# GOOD
+
+```text
+POST /borrow/{bookId}
+POST /return/{borrowId}
+```
+
+Action-oriented.
+
+---
+
+# BAD
+
+```text
+/processBookOperation
+```
+
+Too vague.
+
+---
+
+# 20. Build for Future Extensions Without Overengineering
+
+---
+
+# GOOD FOUNDATION
+
+You can later add:
+
+* penalties
+* mobile app
+* analytics
+* recommendations
+
+WITHOUT rewriting the core system.
+
+---
+
+# Recommended Architecture Vibe
+
+# Backend
+
+```text
+Controller
+↓
+Service
+↓
+Repository
+↓
+Database
+```
+
+---
+
+# Frontend
+
+```text
+Pages
+↓
+Components
+↓
+API Services
+↓
+Backend
+```
+
+---
+
+# Recommended Coding Standards
+
+---
+
+# Naming
+
+## Classes
+
+```text
+PascalCase
+```
+
+Example:
+
+```text
+BorrowService
+```
+
+---
+
+## Methods
+
+```text
+camelCase
+```
+
+Example:
+
+```text
+validateBorrowLimit()
+```
+
+---
+
+## Constants
+
+```text
+UPPER_CASE
+```
+
+Example:
+
+```text
+MAX_BORROW_LIMIT
+```
+
+---
+
+# Recommended Backend Folder Structure
+
+```text
+auth/
+book/
+borrow/
+reservation/
+user/
+common/
+security/
+exception/
+config/
+```
+
+Feature-based organization is cleaner than giant technical folders.
+
+---
+
+# Recommended React Structure
+
+```text
+pages/
+components/
+services/
+hooks/
+types/
+layouts/
+context/
+```
+
+---
+
+# Recommended Development Flow
+
+# Phase 1 — Foundation
+
+Build:
+
+* Spring Boot setup
+* PostgreSQL
+* JWT auth
+* Email verification
+* MFA
+
+---
+
+# Phase 2 — Core Library System
+
+Build:
+
+* books
+* search
+* availability
+
+---
+
+# Phase 3 — Borrowing
+
+Build:
+
+* borrow logic
+* return logic
+* due dates
+* overdue detection
+
+---
+
+# Phase 4 — Reservations
+
+Build:
+
+* reservation queue
+* notifications later
+
+---
+
+# Phase 5 — UI Polish
+
+Improve:
+
+* responsiveness
+* UX
+* accessibility
+* dashboards
+
+---
+
+# Final Engineering Rule
+
+## If a solution feels:
+
+* confusing
+* overabstracted
+* difficult to explain
+* “too smart”
+
+…it is probably the wrong solution.
+
+Good OOP systems feel:
+
+```text
+boring
+predictable
+clean
+stable
+easy to reason about
+```
+
+That is what scales.

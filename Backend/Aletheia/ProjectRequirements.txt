@@ -1,0 +1,716 @@
+# Aletheia — Low-Level Requirements (MVP First)
+
+## Product Overview
+
+### App Name
+
+**Aletheia**
+
+### Core Purpose
+
+A web-based library tracking and borrowing platform that allows students, teachers, researchers, and book enthusiasts to:
+
+* Search books
+* Check availability
+* Borrow/reserve books
+* Track return schedules
+* Securely authenticate using school email + MFA
+
+---
+
+# 1. MVP Scope (Highest Priority Features)
+
+The MVP should focus only on the features necessary to make the system functional, secure, and demonstrable.
+
+## MVP Goals
+
+A user should be able to:
+
+1. Register using NU Laguna email
+2. Verify email
+3. Login securely
+4. Search books
+5. View book availability
+6. Borrow a book
+7. View borrowed books
+8. See return deadlines
+9. Return books
+
+---
+
+# 2. Recommended Tech Stack
+
+## Backend
+
+* Java 21
+* Spring Boot
+* Spring Security
+* Spring Data JPA
+* PostgreSQL
+* JWT Authentication
+* Maven
+
+## Frontend
+
+* React
+* TypeScript
+* Vite
+* React Router
+* Axios
+* TailwindCSS
+
+## Authentication
+
+* JWT Access Token
+* MFA via OTP
+* School email verification
+
+---
+
+# 3. System Architecture
+
+Use a clean layered architecture.
+
+## Backend Layers
+
+```text
+Controller Layer
+↓
+Service Layer
+↓
+Repository Layer
+↓
+Database
+```
+
+## Frontend Layers
+
+```text
+Pages
+↓
+Components
+↓
+Services/API Layer
+↓
+Backend API
+```
+
+---
+
+# 4. User Roles (MVP)
+
+## 4.1 Student/User
+
+Can:
+
+* Register
+* Login
+* Search books
+* Borrow books
+* Return books
+* Reserve unavailable books
+* View profile
+
+## 4.2 Admin/Librarian
+
+Can:
+
+* Add books
+* Update books
+* Remove books
+* Approve borrow requests
+* Mark books returned
+* Manage inventory
+
+---
+
+# 5. Functional Requirements (Prioritized)
+
+# PRIORITY 1 — Authentication Module
+
+This is the foundation of the entire system.
+
+---
+
+## 5.1 User Registration
+
+### Description
+
+Users register using their NU Laguna email.
+
+### Requirements
+
+* Email must end with:
+
+```text
+@nu-laguna.edu.ph
+```
+
+* Required fields:
+
+  * First Name
+  * Last Name
+  * School ID
+  * Email
+  * Password
+
+### Validation Rules
+
+* Email must be unique
+* School ID must be unique
+* Password minimum 8 characters
+* Password must contain:
+
+  * uppercase
+  * lowercase
+  * number
+
+---
+
+## 5.2 Email Verification
+
+### Flow
+
+1. User registers
+2. System sends OTP/code to Outlook email
+3. User enters code
+4. Account becomes active
+
+### Requirements
+
+* OTP expires in 5 minutes
+* User can resend OTP
+* Account cannot login unless verified
+
+---
+
+## 5.3 Multi-Factor Authentication (MFA)
+
+### Flow
+
+1. User logs in
+2. System validates password
+3. User enters authenticator OTP
+
+### MVP Simplification
+
+Use:
+
+* TOTP authenticator apps
+
+  * Google Authenticator
+  * Microsoft Authenticator
+
+### Requirements
+
+* QR generation during MFA setup
+* OTP expires every 30 seconds
+
+---
+
+## 5.4 Login
+
+### Requirements
+
+* JWT-based authentication
+* Secure password hashing using BCrypt
+* Sessionless backend
+
+### Failed Login Rules
+
+* 5 failed attempts lock account for 15 minutes
+
+---
+
+# PRIORITY 2 — Book Management
+
+---
+
+## 6.1 Book Entity
+
+### Required Fields
+
+| Field           | Type    |
+| --------------- | ------- |
+| id              | Long    |
+| isbn            | String  |
+| title           | String  |
+| author          | String  |
+| category        | String  |
+| description     | Text    |
+| quantity        | Integer |
+| availableCopies | Integer |
+| shelfLocation   | String  |
+| publishedYear   | Integer |
+
+---
+
+## 6.2 Search Books
+
+### Users can search by:
+
+* Title
+* Author
+* ISBN
+* Category
+
+### Requirements
+
+* Partial matching
+* Case-insensitive search
+* Pagination support
+
+---
+
+## 6.3 View Book Details
+
+### User can see:
+
+* Book information
+* Availability status
+* Remaining copies
+* Borrow status
+
+---
+
+## 6.4 Book Availability Rules
+
+### Available
+
+If:
+
+```text
+availableCopies > 0
+```
+
+### Unavailable
+
+If:
+
+```text
+availableCopies == 0
+```
+
+---
+
+# PRIORITY 3 — Borrowing System
+
+---
+
+## 7.1 Borrow Book
+
+### Flow
+
+1. User selects book
+2. System checks availability
+3. Borrow record created
+4. availableCopies decreases
+
+### Requirements
+
+* One user may borrow maximum 5 books
+* Borrow period:
+
+```text
+14 days
+```
+
+* Cannot borrow unavailable books
+
+---
+
+## 7.2 Borrow Record Entity
+
+| Field      | Type     |
+| ---------- | -------- |
+| id         | Long     |
+| userId     | Long     |
+| bookId     | Long     |
+| borrowDate | DateTime |
+| dueDate    | DateTime |
+| returnDate | DateTime |
+| status     | Enum     |
+
+### Status Enum
+
+```text
+BORROWED
+RETURNED
+OVERDUE
+RESERVED
+```
+
+---
+
+## 7.3 Return Book
+
+### Flow
+
+1. User/admin marks book returned
+2. Return date stored
+3. availableCopies increases
+
+---
+
+## 7.4 Overdue Detection
+
+### Rule
+
+If:
+
+```text
+currentDate > dueDate
+```
+
+Status becomes:
+
+```text
+OVERDUE
+```
+
+---
+
+# PRIORITY 4 — Reservation System
+
+---
+
+## 8.1 Reserve Book
+
+### Requirements
+
+* User may reserve unavailable books
+* Queue-based reservation
+* First reserve = first notified
+
+---
+
+## 8.2 Reservation Rules
+
+* User cannot reserve already borrowed book by themselves
+* Reservation expires after:
+
+```text
+24 hours after availability
+```
+
+---
+
+# PRIORITY 5 — User Dashboard
+
+---
+
+## 9.1 Dashboard Features
+
+### User sees:
+
+* Borrowed books
+* Due dates
+* Overdue books
+* Reserved books
+* Borrow history
+
+---
+
+# PRIORITY 6 — Admin Dashboard
+
+---
+
+## 10.1 Admin Features
+
+### Manage Books
+
+* Create
+* Edit
+* Delete
+
+### Manage Borrow Requests
+
+* Approve borrow
+* Mark returned
+
+### View Analytics (Optional MVP+)
+
+* Most borrowed books
+* Overdue users
+
+---
+
+# 6. Non-Functional Requirements
+
+---
+
+## Security
+
+### Requirements
+
+* BCrypt password hashing
+* JWT authentication
+* MFA required
+* HTTPS enabled
+* Role-based authorization
+
+---
+
+## Performance
+
+### Requirements
+
+* Search response under 2 seconds
+* Pagination for large datasets
+
+---
+
+## Reliability
+
+### Requirements
+
+* Database transaction support
+* Prevent duplicate borrow requests
+
+---
+
+## Scalability
+
+### Requirements
+
+Design system for:
+
+* additional campuses
+* multiple libraries
+* future mobile app
+
+---
+
+# 7. Suggested Database Design
+
+# Users Table
+
+| Column      | Type    |
+| ----------- | ------- |
+| id          | bigint  |
+| first_name  | varchar |
+| last_name   | varchar |
+| school_id   | varchar |
+| email       | varchar |
+| password    | varchar |
+| role        | varchar |
+| mfa_enabled | boolean |
+| is_verified | boolean |
+
+---
+
+# Books Table
+
+| Column           | Type    |
+| ---------------- | ------- |
+| id               | bigint  |
+| isbn             | varchar |
+| title            | varchar |
+| author           | varchar |
+| quantity         | integer |
+| available_copies | integer |
+
+---
+
+# Borrow Records Table
+
+| Column      | Type      |
+| ----------- | --------- |
+| id          | bigint    |
+| user_id     | bigint    |
+| book_id     | bigint    |
+| borrow_date | timestamp |
+| due_date    | timestamp |
+| return_date | timestamp |
+| status      | varchar   |
+
+---
+
+# Reservations Table
+
+| Column           | Type      |
+| ---------------- | --------- |
+| id               | bigint    |
+| user_id          | bigint    |
+| book_id          | bigint    |
+| reservation_date | timestamp |
+| status           | varchar   |
+
+---
+
+# 8. Recommended Backend Package Structure
+
+```text
+com.aletheia
+│
+├── auth
+├── user
+├── book
+├── borrow
+├── reservation
+├── common
+├── config
+├── security
+├── exception
+└── util
+```
+
+---
+
+# 9. Recommended Frontend Structure
+
+```text
+src/
+│
+├── pages/
+├── components/
+├── services/
+├── hooks/
+├── layouts/
+├── types/
+├── context/
+├── utils/
+└── routes/
+```
+
+---
+
+# 10. Suggested Design Patterns
+
+## Backend
+
+### Repository Pattern
+
+For database abstraction.
+
+### DTO Pattern
+
+Separate API models from entities.
+
+### Service Layer Pattern
+
+Business logic isolation.
+
+### Strategy Pattern
+
+For notification methods later:
+
+* email
+* SMS
+* push notifications
+
+### Builder Pattern
+
+For creating complex response objects.
+
+---
+
+# 11. Recommended MVP Sprint Order
+
+# Sprint 1
+
+* Project setup
+* Database setup
+* Authentication
+* JWT
+* Email verification
+
+# Sprint 2
+
+* MFA
+* User roles
+* Security hardening
+
+# Sprint 3
+
+* Book CRUD
+* Search functionality
+* Availability tracking
+
+# Sprint 4
+
+* Borrowing system
+* Return system
+* Due dates
+
+# Sprint 5
+
+* Reservation system
+* Dashboard
+* UI polish
+
+---
+
+# 12. APIs Required (MVP)
+
+## Auth APIs
+
+```text
+POST /api/auth/register
+POST /api/auth/verify
+POST /api/auth/login
+POST /api/auth/mfa/verify
+```
+
+---
+
+## Book APIs
+
+```text
+GET /api/books
+GET /api/books/{id}
+POST /api/books
+PUT /api/books/{id}
+DELETE /api/books/{id}
+```
+
+---
+
+## Borrow APIs
+
+```text
+POST /api/borrow/{bookId}
+POST /api/return/{borrowId}
+GET /api/borrow/my-books
+```
+
+---
+
+## Reservation APIs
+
+```text
+POST /api/reservations/{bookId}
+GET /api/reservations/my-reservations
+```
+
+---
+
+# 13. Simplifications Recommended for MVP
+
+To avoid overengineering:
+
+## DO NOT add yet:
+
+* AI recommendations
+* Chat system
+* Complex analytics
+* Fine calculation system
+* Multi-library synchronization
+* Real-time websocket updates
+* Mobile app
+* Barcode scanning
+* Social/community features
+
+Focus first on:
+
+```text
+Authentication
++
+Book availability
++
+Borrowing workflow
++
+Return tracking
+```
+
+That is the true core value of Aletheia.
