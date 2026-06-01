@@ -191,6 +191,7 @@ This project demonstrates practical use of OOP design in a full-stack applicatio
 - Centralized authentication, validation, and error handling.
 - Typed frontend service layer, reusable UI components, and protected routing.
 - Clear alignment with GRASP, SOLID, and general object-oriented best practices.
+<<<<<<< HEAD
 
 
 ## Developer Architecture (Short)
@@ -223,3 +224,5 @@ npm install
 npm run dev
 ```
 
+=======
+>>>>>>> 49ecf4db3ae30115e0b586cb9ff09b3732018c55
