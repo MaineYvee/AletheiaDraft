@@ -192,4 +192,34 @@ This project demonstrates practical use of OOP design in a full-stack applicatio
 - Typed frontend service layer, reusable UI components, and protected routing.
 - Clear alignment with GRASP, SOLID, and general object-oriented best practices.
 
-If you want, I can also add a shorter developer-facing architecture section to the README describing the main packages and how they interact.
+
+## Developer Architecture (Short)
+
+- **Backend (packages)**:
+  - `auth`: authentication endpoints, `AuthService`, `UserEntity`, `UserRepository`.
+  - `book`: book CRUD and search, `BookService`, `BookEntity`, `BookRepository`.
+  - `borrow`, `reservation`, `admin`, `audit`, `user`, `storage`: each handles a distinct domain and follows the controller -> service -> repository pattern.
+  - `security`: `JwtService`, `JwtAuthenticationFilter`, `SecurityConfig` enforce JWT-based auth and role mappings.
+  - `common`: `BaseEntity`, `ApiResponse<T>`, shared exceptions and utility classes.
+
+- **Backend interaction model**: Controllers receive HTTP requests and delegate to Services which implement business rules and call Repositories for persistence. DTOs map entity data to API contracts. `AuthenticatedUserService` and JWT filter provide identity information to services.
+
+- **Frontend (folders)**:
+  - `src/api`: single Axios client (`api/axios.ts`) with `baseURL` and automatic `Authorization` header injection.
+  - `src/services`: small focused modules that wrap backend endpoints (`authService`, `bookService`, etc.).
+  - `src/pages`, `src/components`, `src/layouts`, `src/routes`: UI composition and routing; `ProtectedRoute` enforces authentication.
+  - `src/types`: TypeScript interfaces describing API payloads.
+
+- **End-to-end data flow**: UI (page/component) -> service -> `apiClient` -> Backend Controller -> Service -> Repository -> Database. JWT token stored in `localStorage` is sent with requests and validated by the backend.
+
+- **Quick dev commands**:
+
+```bash
+cd Backend/Aletheia
+./mvnw spring-boot:run
+
+cd Frontend/aletheia-frontend
+npm install
+npm run dev
+```
+
