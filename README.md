@@ -191,5 +191,3 @@ This project demonstrates practical use of OOP design in a full-stack applicatio
 - Centralized authentication, validation, and error handling.
 - Typed frontend service layer, reusable UI components, and protected routing.
 - Clear alignment with GRASP, SOLID, and general object-oriented best practices.
-
-If you want, I can also add a shorter developer-facing architecture section to the README describing the main packages and how they interact.
