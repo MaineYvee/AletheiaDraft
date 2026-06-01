@@ -1,73 +1,86 @@
-# React + TypeScript + Vite
+# Frontend / aletheia-frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Overview
 
-Currently, two official plugins are available:
+This folder contains the React + TypeScript frontend for Aletheia. It is built with Vite and provides the user interface, client-side routing, service abstraction, and reusable UI components for interacting with the backend.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## How the frontend works
 
-## React Compiler
+The frontend is organized around pages, reusable components, and services.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. `src/App.tsx` defines the route structure.
+2. Protected routes are enforced via `src/routes/ProtectedRoute.tsx`.
+3. Pages in `src/pages` call functions from `src/services`.
+4. Those service functions send HTTP requests through `src/api/axios.ts`.
+5. Data returned from the API is typed with interfaces in `src/types` and rendered by page components.
 
-## Expanding the ESLint configuration
+## Folder structure and responsibilities
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### `src/api`
+- `axios.ts` creates a shared Axios instance with `baseURL` and automatically adds JWT tokens from `localStorage`.
+- This central client keeps API configuration in one place.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### `src/services`
+- Each service file focuses on one backend domain.
+- `authService.ts`: login and registration.
+- `bookService.ts`: book listing and detail fetches.
+- `borrowService.ts`, `reservationService.ts`, `profileService.ts`, `dashboardService.ts`, `adminService.ts`, `userService.ts`, `fileService.ts`: each wraps backend endpoints for the related feature.
+- Services separate network calls from UI components.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### `src/pages`
+- Pages represent screens and contain UI logic.
+- Examples:
+  - `LoginPage`, `RegisterPage`, `HomePage`
+  - `DashboardPage`, `ProfilePage`, `BorrowHistoryPage`, `MyBorrowedBooksPage`, `MyReservationsPage`
+  - `BooksPage`, `BookDetailsPage`, `CreateBookPage`, `EditBookPage`
+  - Admin pages like `AdminDashboardPage`, `AdminBooksPage`, `AuditLogsPage`, `UserManagementPage`
+- Pages call service methods, manage local state, and render components.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### `src/components`
+- Reusable UI building blocks.
+- `BookForm.tsx` is shared by book create/edit flows.
+- `Sidebar.tsx` and `AdminSidebar.tsx` provide consistent navigation.
+- `DashboardCard.tsx` renders metric summaries.
+
+### `src/layouts`
+- `DashboardLayout.tsx` wraps dashboard-related pages with shared layout and navigation.
+
+### `src/routes`
+- `ProtectedRoute.tsx` redirects unauthenticated users to `/login`.
+- It enforces token-based access for protected pages.
+
+### `src/types`
+- TypeScript interfaces ensure the app handles backend data consistently.
+- Types include `Book`, `User`, `Profile`, `Reservation`, `BorrowedBook`, `BorrowHistory`, and `AuditLog`.
+
+### `src/context` and `src/hooks`
+- These folders are currently empty and reserved for later state management or custom hooks.
+- The current design uses local state in individual pages and service calls.
+
+## Key connections
+
+### Route and page connections
+- `App.tsx` determines which page renders for each path.
+- Protected pages such as `/dashboard`, `/profile`, and admin routes are wrapped in `ProtectedRoute`.
+- Pages are composed from components and layouts to keep UI code modular.
+
+### Service and API connections
+- Page components call service functions like `login()`, `getBooks()`, `getBookById()`, and `getProfile()`.
+- Service functions use the shared Axios client from `src/api/axios.ts`.
+- The Axios client adds `Authorization: Bearer <token>` automatically when a token is present.
+
+### Component reuse
+- `BookForm` is used by both `CreateBookPage` and `EditBookPage`.
+- `Sidebar` and `AdminSidebar` are used across user and admin dashboards.
+- `DashboardCard` is used to display numerical summaries consistently.
+
+## Running the frontend
+
+From `Frontend/aletheia-frontend`:
+
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+The frontend application runs locally via Vite and connects to the backend API at `http://localhost:8080/api`.
